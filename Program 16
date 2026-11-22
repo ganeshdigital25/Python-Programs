@@ -1,0 +1,121 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from pathlib import Path
+
+# Ask the user for the CSV filename
+file_name = input(
+    "Enter the CSV filename (press Enter to use sample_data_assignment_07.csv): "
+).strip()
+
+if not file_name:
+    file_name = "sample_data_assignment_07.csv"
+
+# Load the dataset and handle an invalid filename
+try:
+    df = pd.read_csv(file_name)
+except FileNotFoundError:
+    print(f"Error: Could not find '{file_name}'.")
+    raise SystemExit
+except pd.errors.EmptyDataError:
+    print("Error: The CSV file is empty.")
+    raise SystemExit
+
+# Check that the required columns are present
+required_columns = ["Student", "Maths", "Python", "Attendance", "City"]
+missing_columns = [column for column in required_columns if column not in df.columns]
+
+if missing_columns:
+    print("Error: Missing required column(s):", ", ".join(missing_columns))
+    raise SystemExit
+
+# Convert mark and attendance columns to numbers
+for column in ["Maths", "Python", "Attendance"]:
+    df[column] = pd.to_numeric(df[column], errors="coerce")
+
+# Remove rows that do not have the numerical data needed for the plots
+df = df.dropna(subset=["Maths", "Python", "Attendance"])
+
+if df.empty:
+    print("Error: There are no rows with valid marks and attendance.")
+    raise SystemExit
+
+print("\nDataset:")
+print(df)
+
+# Display average values
+print("\nAverage Maths marks:", round(df["Maths"].mean(), 2))
+print("Average Python marks:", round(df["Python"].mean(), 2))
+print("Average Attendance:", round(df["Attendance"].mean(), 2))
+
+# Line plot: Python marks by student
+plt.figure(figsize=(8, 5))
+plt.plot(df["Student"], df["Python"], marker="o", color="blue")
+plt.title("Python Marks of Students")
+plt.xlabel("Student")
+plt.ylabel("Python Marks")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+# Bar plot: Maths marks by student
+plt.figure(figsize=(8, 5))
+plt.bar(df["Student"], df["Maths"], color="orange")
+plt.title("Maths Marks of Students")
+plt.xlabel("Student")
+plt.ylabel("Maths Marks")
+plt.tight_layout()
+plt.show()
+
+# Scatter plot: Maths marks versus Python marks
+plt.figure(figsize=(8, 5))
+plt.scatter(df["Maths"], df["Python"], s=70, color="green")
+plt.title("Maths Marks versus Python Marks")
+plt.xlabel("Maths Marks")
+plt.ylabel("Python Marks")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+# Correlation matrix and heatmap
+correlation = df[["Maths", "Python", "Attendance"]].corr()
+print("\nCorrelation Matrix:")
+print(correlation)
+
+plt.figure(figsize=(7, 5))
+sns.heatmap(correlation, annot=True, cmap="Blues", vmin=-1, vmax=1)
+plt.title("Correlation Heatmap")
+plt.tight_layout()
+plt.show()
+
+# Extension: histogram of Python marks
+plt.figure(figsize=(8, 5))
+plt.hist(df["Python"], bins=5, color="purple", edgecolor="black")
+plt.title("Distribution of Python Marks")
+plt.xlabel("Python Marks")
+plt.ylabel("Number of Students")
+plt.tight_layout()
+plt.show()
+
+# Extension: box plot of Maths and Python marks
+plt.figure(figsize=(8, 5))
+plt.boxplot([df["Maths"], df["Python"]], tick_labels=["Maths", "Python"])
+plt.title("Maths and Python Marks")
+plt.ylabel("Marks")
+plt.tight_layout()
+plt.show()
+
+# Extension: pie chart showing students by city
+city_counts = df["City"].value_counts()
+
+plt.figure(figsize=(7, 7))
+plt.pie(
+    city_counts,
+    labels=city_counts.index,
+    autopct="%1.1f%%",
+    startangle=90
+)
+plt.title("Students by City")
+plt.tight_layout()
+plt.show()
+```**CSV format:** Save the data as `sample_data_assignment_07.csv` with these headers: `Student,Maths,Python,Attendance,City`. The code also asks for a different filename if needed.
