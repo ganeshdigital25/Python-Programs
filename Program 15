@@ -1,0 +1,94 @@
+import sys
+from pathlib import Path
+
+import pandas as pd
+
+
+def load_data(file_path):
+    """Load data from a CSV or Excel file."""
+    path = Path(file_path)
+    extension = path.suffix.lower()
+
+    if extension == ".csv":
+        return pd.read_csv(path)
+    elif extension in [".xls", ".xlsx"]:
+        return pd.read_excel(path)
+    else:
+        raise ValueError("Please provide a .csv, .xls, or .xlsx file.")
+
+
+def main():
+    if len(sys.argv) > 1:
+        file_path = sys.argv[1]
+        try:
+            data = load_data(file_path)
+        except (FileNotFoundError, ValueError, ImportError) as error:
+            print("Error loading file:", error)
+            return
+    else:
+        # Sample data used when no file is provided.
+        data = pd.DataFrame({
+            "Name": ["Asha", "Ravi", "Meera", "Ravi", None],
+            "Marks": [88, 72, None, 72, 65],
+            "City": ["Pune", "Mumbai", "Pune", "Mumbai", None],
+        })
+
+    print("Original data:")
+    print(data.head())
+
+    print("\nDataset information:")
+    data.info()
+
+    print("\nDataset summary:")
+    print(data.describe(include="all"))
+
+    print("\nMissing values in each column:")
+    print(data.isnull().sum())
+
+    # Remove duplicate rows.
+    data = data.drop_duplicates()
+
+    # Fill missing numeric values with the column median.
+    # Fill missing text values with the most common value.
+    for column in data.columns:
+        if pd.api.types.is_numeric_dtype(data[column]):
+            if data[column].isnull().any():
+                data[column] = data[column].fillna(data[column].median())
+        else:
+            if data[column].isnull().any():
+                modes = data[column].mode()
+                if not modes.empty:
+                    data[column] = data[column].fillna(modes[0])
+
+    # Remove rows that are completely empty.
+    data = data.dropna(how="all")
+
+    # Example of removing an irrelevant column:
+    # data = data.drop(columns=["Remarks"], errors="ignore")
+
+    # Select rows with marks of 75 or more using loc[].
+    if "Marks" in data.columns:
+        selected_data = data.loc[data["Marks"] >= 75]
+        print("\nStudents with marks of 75 or more:")
+        print(selected_data)
+
+    print("\nCleaned data:")
+    print(data)
+
+    print("\nMissing values after cleaning:")
+    print(data.isnull().sum())
+
+    # Save the cleaned data to a CSV file.
+    if len(sys.argv) > 1:
+        output_file = Path(file_path).with_name(
+            Path(file_path).stem + "_cleaned.csv"
+        )
+    else:
+        output_file = Path("cleaned_sample_data.csv")
+
+    data.to_csv(output_file, index=False)
+    print("\nCleaned data saved to:", output_file)
+
+
+if __name__ == "__main__":
+    main()
